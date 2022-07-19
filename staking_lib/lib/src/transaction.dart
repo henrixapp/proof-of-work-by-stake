@@ -16,6 +16,10 @@ class TxOut {
   TxOut(this.address, this.amount);
   factory TxOut.fromJson(Map<String, dynamic> json) => _$TxOutFromJson(json);
   Map<String, dynamic> toJson() => _$TxOutToJson(this);
+  @override
+  String toString() {
+    return toJson().toString();
+  }
 }
 
 /**
@@ -25,7 +29,7 @@ class TxOut {
 class TxIn {
   final String txOutId;
   final int txOutIndex;
-  final String signature;
+  String signature;
   factory TxIn.fromJson(Map<String, dynamic> json) => _$TxInFromJson(json);
 
   TxIn(this.txOutId, this.txOutIndex, this.signature);
@@ -44,12 +48,16 @@ class UnspentTxOut {
       _$UnspentTxOutFromJson(json);
 
   Map<String, dynamic> toJson() => _$UnspentTxOutToJson(this);
+  @override
+  String toString() {
+    return toJson().toString();
+  }
 }
 
 @JsonSerializable()
 class Transaction {
-  final String id;
-  final List<TxIn> txIns;
+  String id;
+  List<TxIn> txIns;
   final List<TxOut> txOuts;
   Transaction(this.id, this.txIns, this.txOuts);
   factory Transaction.fromJson(Map<String, dynamic> json) =>
@@ -61,5 +69,10 @@ class Transaction {
             txOuts.map((e) => "${e.address},${e.amount}").join();
     var input = utf8.encode(tobeHashed);
     return sha256.convert(input).toString();
+  }
+
+  @override
+  String toString() {
+    return toJson().toString();
   }
 }

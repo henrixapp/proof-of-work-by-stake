@@ -5,7 +5,7 @@ import 'package:cryptography/dart.dart';
 import 'package:hex/hex.dart';
 import 'package:json_annotation/json_annotation.dart';
 
-import 'Transaction.dart';
+import 'transaction.dart';
 
 part 'account.g.dart';
 

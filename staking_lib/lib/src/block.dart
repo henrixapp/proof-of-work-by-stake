@@ -16,6 +16,7 @@ class Block {
   final int difficulty;
   final String minterAdress;
   final int minterBalance;
+  final int nonce;
   static String calculateHash(
       int index,
       String previousHash,
@@ -24,10 +25,11 @@ class Block {
       List<Announcement> announcements,
       int difficulty,
       String minterAdress,
-      int minterBalance) {
+      int minterBalance,
+      int nonce) {
     var tobeHashed =
-        '$index$previousHash${timestamp.toIso8601String()},$transactions,$announcements,$difficulty,$minterAdress,$minterBalance';
-    print(tobeHashed);
+        '$index$previousHash${timestamp.toIso8601String()},$transactions,$announcements,$difficulty,$minterAdress,$minterBalance,$nonce';
+    //print(tobeHashed);
     var input = utf8.encode(tobeHashed);
     return sha256.convert(input).toString();
   }
@@ -40,9 +42,10 @@ class Block {
       this.announcements,
       this.difficulty,
       this.minterAdress,
-      this.minterBalance)
+      this.minterBalance,
+      this.nonce)
       : hash = calculateHash(index, previousHash, timestamp, transactions,
-            announcements, difficulty, minterAdress, minterBalance);
+            announcements, difficulty, minterAdress, minterBalance, nonce);
   factory Block.fromJson(Map<String, dynamic> json) => _$BlockFromJson(json);
 
   Map<String, dynamic> toJson() => _$BlockToJson(this);
@@ -55,17 +58,23 @@ class Block {
     final comp =
         BigInt.from(2).pow(256) * BigInt.from(minterBalance / difficulty);
     final stakingHashInt = BigInt.parse("0x$hash");
-    final difference = stakingHashInt - comp;
-
-    return difference.toDouble() >= 0.0;
+    return stakingHashInt <= comp;
   }
 
   bool isValidNewBlock(Block oldblock) {
     return oldblock.index == (index - 1) &&
         oldblock.hash == previousHash &&
         oldblock.timestamp.isBefore(timestamp) &&
-        calculateHash(index, previousHash, timestamp, transactions,
-                announcements, difficulty, minterAdress, minterBalance) ==
+        calculateHash(
+                index,
+                previousHash,
+                timestamp,
+                transactions,
+                announcements,
+                difficulty,
+                minterAdress,
+                minterBalance,
+                nonce) ==
             hash &&
         isBlockStakingValid();
   }

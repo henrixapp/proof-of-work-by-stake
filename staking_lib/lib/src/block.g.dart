@@ -19,6 +19,7 @@ Block _$BlockFromJson(Map<String, dynamic> json) => Block(
       json['difficulty'] as int,
       json['minterAdress'] as String,
       json['minterBalance'] as int,
+      json['nonce'] as int,
     );
 
 Map<String, dynamic> _$BlockToJson(Block instance) => <String, dynamic>{
@@ -30,4 +31,5 @@ Map<String, dynamic> _$BlockToJson(Block instance) => <String, dynamic>{
       'difficulty': instance.difficulty,
       'minterAdress': instance.minterAdress,
       'minterBalance': instance.minterBalance,
+      'nonce': instance.nonce,
     };
