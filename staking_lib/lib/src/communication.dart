@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:staking_lib/staking_lib.dart';
 import 'package:udp/udp.dart';
 import 'blockchain.dart';
-
+import 'package:http/http.dart' as http;
 part 'communication.g.dart';
 
 @JsonSerializable()
@@ -32,14 +33,18 @@ class UDPChainHolder {
   UDP? udp;
   int port;
   Function callback;
+  Completer? completer;
   bool requested_new_chain = false;
   UDPChainHolder(this.chain, this.account, this.callback, this.port);
+  HttpServer? server;
+  Message? lastMessage;
   Future<void> send(Message m) async {
     if (udp != null) {
       print(m);
+      lastMessage = m;
       // send a simple string to a broadcast endpoint on port 65001.
       var dataLength = await udp!
-          .send(jsonEncode(m).codeUnits, Endpoint.broadcast(port: Port(port)));
+          .send("update".codeUnits, Endpoint.broadcast(port: Port(port)));
     }
   }
 
@@ -76,20 +81,32 @@ class UDPChainHolder {
   }
 
   Future<void> start() async {
+    completer = new Completer();
     udp = await UDP.bind(Endpoint.any(port: Port(port)));
+    print(udp!.local.port!.value);
     udp!.asStream().listen((datagram) async {
       var str = String.fromCharCodes(datagram!.data);
-      Message m = Message.fromJson(jsonDecode(str));
-      print(str);
-      handle(m);
+      if (str == "update") {
+        var res = await http
+            .read(Uri.parse(datagram.address.address + ":58581/test"));
+        print(res);
+        handle(Message.fromJson(jsonDecode(res)));
+      }
     }, onError: (err) {
       print("Error: $err");
     });
+    server = await HttpServer.bind(InternetAddress.anyIPv4, 58581);
+    server!.forEach((HttpRequest request) {
+      request.response.write(jsonEncode(lastMessage));
+      request.response.close();
+    });
+    return completer!.future;
   }
 
   void transaction(String receiver, int amount) {}
   void close() async {
     if (udp != null) udp!.close();
+    completer!.complete();
   }
 
   void handleSingleBlock(Block latestBlock) {
