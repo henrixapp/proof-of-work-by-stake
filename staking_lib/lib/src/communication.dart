@@ -77,6 +77,7 @@ class UDPChainHolder {
           handleSingleBlock(m.latestBlock!);
         }
       }
+      callback();
     }
   }
 
@@ -94,16 +95,15 @@ class UDPChainHolder {
       var str = String.fromCharCodes(datagram!.data);
       print(str);
       if (str == "update") {
-        var res = await http
-            .read(Uri.parse(datagram.address.address + ":58581/test"));
-        print(res);
+        var res = await http.read(
+            Uri.parse("http://" + datagram.address.address + ":58581/test"));
         handle(Message.fromJson(jsonDecode(res)));
       }
     }, onError: (err) {
       print("Error: $err");
     });
 
-    await server!.forEach((HttpRequest request) {
+    server!.forEach((HttpRequest request) {
       request.response.write(jsonEncode(lastMessage));
       request.response.close();
     });

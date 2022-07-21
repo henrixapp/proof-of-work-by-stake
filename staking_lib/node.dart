@@ -26,13 +26,17 @@ void main(List<String> args) async {
   Blockchain? chain;
   if (await fileChain.exists()) {
     chain = Blockchain.fromJson(jsonDecode(fileChain.readAsStringSync()));
+    print(await chain.isValidChain());
   } else {
     chain = Blockchain.create([user], 4 * 5 * 8 * 3600, user);
     fileChain.writeAsStringSync(json.encode(chain));
   }
-  UDPChainHolder chainHolder = UDPChainHolder(chain, user, (String m) {
-    print(m);
+  UDPChainHolder? chRef;
+  UDPChainHolder chainHolder = UDPChainHolder(chain, user, () {
+    print(chRef!.getAccountBalance());
+    fileChain.writeAsStringSync(json.encode(chain));
   }, int.parse(args[1]));
+  chRef = chainHolder;
   await chainHolder.bind();
   var test = chainHolder.start();
   if (chain.chain.length <= 1) {
@@ -40,6 +44,7 @@ void main(List<String> args) async {
     await chainHolder.request();
   }
   print("Validate:");
+  return;
   while (true) {
     print("Command(quit,send,balance):");
     String command = stdin.readLineSync()!;
