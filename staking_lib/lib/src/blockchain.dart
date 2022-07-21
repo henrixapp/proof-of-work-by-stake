@@ -147,8 +147,27 @@ class Blockchain {
     for (var i = 0; i < tx.txIns.length; i++) {
       tx.txIns[i].signature = await from.signTxIn(tx, i, unspentTxOuts());
     }
-    chain.add(findBlock(chain.length, chain.last.hash, [tx], [], 10000, from));
+    final difficulty = 10000;
+    chain.add(
+        findBlock(chain.length, chain.last.hash, [tx], [], difficulty, from));
     isValidChain();
+  }
+
+  Future<Transaction> generateTransaction(
+      Account from, String to, int amount) async {
+    var res = findTxOutsForAmount(amount, unspentTxOuts(), from.pubKeyHEX);
+    final leftOverAmount = res.item2;
+    final includedUnspentTx = res.item1;
+    final unsignedTxIns =
+        includedUnspentTx.map((e) => TxIn(e.txOutId, e.txOutIdx, "")).toList();
+    var tx = Transaction("", unsignedTxIns,
+        createTxOuts(to, from.pubKeyHEX, amount, leftOverAmount));
+    tx.id = Transaction.transactionId(tx.txIns, tx.txOuts);
+    final List fixedList = Iterable<int>.generate(tx.txIns.length).toList();
+    for (var i = 0; i < tx.txIns.length; i++) {
+      tx.txIns[i].signature = await from.signTxIn(tx, i, unspentTxOuts());
+    }
+    return tx;
   }
 
   Block findBlock(
@@ -308,5 +327,20 @@ class Blockchain {
             "null")
         .toList()
       ..addAll(newOnes);
+  }
+
+  void appendBlock(Block latestBlock) {
+    if (latestBlock.isValidNewBlock(chain.last)) {
+      print("Appending block");
+      chain.add(latestBlock);
+    }
+  }
+
+  Block submitTransactions(List<Transaction> transactionPool, Account from) {
+    final difficulty = 10000;
+    Block bl = findBlock(
+        chain.length, chain.last.hash, transactionPool, [], difficulty, from);
+    chain.add(bl);
+    return bl;
   }
 }
