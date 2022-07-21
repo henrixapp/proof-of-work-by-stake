@@ -80,12 +80,19 @@ class UDPChainHolder {
     }
   }
 
+  Future<void> bind() async {
+    udp = await UDP.bind(Endpoint.any(port: Port(65000)));
+    server = await HttpServer.bind(InternetAddress.anyIPv4, 58581);
+  }
+
   Future<void> start() async {
     completer = new Completer();
-    udp = await UDP.bind(Endpoint.any(port: Port(port)));
+    print(port);
+
     print(udp!.local.port!.value);
     udp!.asStream().listen((datagram) async {
       var str = String.fromCharCodes(datagram!.data);
+      print(str);
       if (str == "update") {
         var res = await http
             .read(Uri.parse(datagram.address.address + ":58581/test"));
@@ -95,8 +102,8 @@ class UDPChainHolder {
     }, onError: (err) {
       print("Error: $err");
     });
-    server = await HttpServer.bind(InternetAddress.anyIPv4, 58581);
-    server!.forEach((HttpRequest request) {
+
+    await server!.forEach((HttpRequest request) {
       request.response.write(jsonEncode(lastMessage));
       request.response.close();
     });

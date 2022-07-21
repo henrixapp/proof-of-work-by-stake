@@ -33,7 +33,8 @@ void main(List<String> args) async {
   UDPChainHolder chainHolder = UDPChainHolder(chain, user, (String m) {
     print(m);
   }, int.parse(args[1]));
-  chainHolder.start();
+  await chainHolder.bind();
+  var test = chainHolder.start();
   if (chain.chain.length <= 1) {
     print("Request");
     await chainHolder.request();
