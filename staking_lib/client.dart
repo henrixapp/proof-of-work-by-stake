@@ -25,27 +25,23 @@ void main(List<String> args) async {
   }
   print("Validate:");
   print(await chain.isValidChain());
-  print("Account 1:");
-  print(chain.getAccountBalance(user.pubKeyHEX));
-  print("Account 2:");
-  print(chain.getAccountBalance(
-      "242cbc2e76bde51005255560dc67b74a97ae8a0dac4402026114ecb1ad0da970"));
-
-  await chain.submitTransaction(user,
-      "242cbc2e76bde51005255560dc67b74a97ae8a0dac4402026114ecb1ad0da970", 1200);
-  print(await chain.isValidChain());
-  print("Account 1:");
-  print(chain.getAccountBalance(user.pubKeyHEX));
-  print("Account 2:");
-  print(chain.getAccountBalance(
-      "242cbc2e76bde51005255560dc67b74a97ae8a0dac4402026114ecb1ad0da970"));
-  await chain.submitTransaction(user,
-      "242cbc2e76bde51005255560dc67b74a97ae8a0dac4402026114ecb1ad0da970", 1230);
-  print("Account 1:");
-  print(chain.getAccountBalance(user.pubKeyHEX));
-  print("Account 2:");
-  print(chain.getAccountBalance(
-      "242cbc2e76bde51005255560dc67b74a97ae8a0dac4402026114ecb1ad0da970"));
+  while (true) {
+    print("Command(quit,send,balance):");
+    String command = stdin.readLineSync()!;
+    if (command == "quit") {
+      break;
+    }
+    if (command == "balance") {
+      print("Your balance is ${chain.getAccountBalance(user.pubKeyHEX)}");
+    }
+    if (command == "send") {
+      print("Please specify the address:");
+      String adress = stdin.readLineSync()!;
+      print("Please enter the amount:");
+      int amount = int.parse(stdin.readLineSync()!);
+      await chain.submitTransaction(user, adress, amount);
+    }
+  }
   fileChain.writeAsStringSync(json.encode(chain));
   //print(chain.findBlock(index, previousHash, transactions, announcements, difficulty, user))
 }
