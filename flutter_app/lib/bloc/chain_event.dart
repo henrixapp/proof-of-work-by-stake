@@ -20,3 +20,5 @@ class ChainAnnounced extends ChainEvent {
   final DateTime timestamp;
   ChainAnnounced(this.timestamp, this.to);
 }
+
+class ChainAbort extends ChainEvent {}

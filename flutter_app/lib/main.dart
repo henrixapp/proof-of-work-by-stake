@@ -8,11 +8,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:staking_lib/staking_lib.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(BlocProvider(
       create: (context) {
-        return ChainBloc();
+        var bl = ChainBloc();
+        bl.add(ChainLoad());
+        bl.add(ChainRequest());
+        return bl;
       },
       child: const MyApp()));
 }
@@ -116,11 +120,25 @@ class _MyHomePageState extends State<MyHomePage> {
                       "CheckIn Time",
                       style: style,
                     )),
+                TextButton.icon(
+                    onPressed: () {
+                      BlocProvider.of<ChainBloc>(context).add(ChainAbort());
+                    },
+                    icon: Icon(Icons.cancel),
+                    label: Text(
+                      "Abort",
+                      style: style,
+                    )),
               ],
             );
           }
           return Column(children: [
             Text("Amount left ${prettyDuration(Duration(seconds: amount))}"),
+            TextButton(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: state.pubkey));
+                },
+                child: Text("Copy own pubkey to clipboard")),
             TextButton.icon(
                 onPressed: () {
                   BlocProvider.of<ChainBloc>(context).add(ChainRequest());

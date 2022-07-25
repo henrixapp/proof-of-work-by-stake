@@ -24,9 +24,13 @@ class ChainBloc extends Bloc<ChainEvent, ChainState> {
     return File('$path/user.json');
   }
 
-  ChainBloc() : super(ChainInitial(0)) {
+  ChainBloc() : super(ChainInitial(0, "")) {
     on<ChainEvent>((event, emit) async {
       // TODO: implement event handler
+      if (event is ChainAbort) {
+        emit(ChainLoaded(
+            chainHolder!.getAccountBalance(), chainHolder!.account.pubKeyHEX));
+      }
       if (event is ChainLoad) {
         print("test");
         if (chainHolder == null) {
@@ -62,7 +66,8 @@ class ChainBloc extends Bloc<ChainEvent, ChainState> {
         if (chainHolder != null) {
           chainHolder!.chain.chain = [];
           await chainHolder!.request();
-          emit(ChainLoaded(chainHolder!.getAccountBalance()));
+          emit(ChainLoaded(chainHolder!.getAccountBalance(),
+              chainHolder!.account.pubKeyHEX));
         }
       }
       if (event is ChainChanged) {
@@ -71,19 +76,22 @@ class ChainBloc extends Bloc<ChainEvent, ChainState> {
           emit(ChainTimeRunning(
               chainHolder!.getAccountBalance(),
               (state as ChainTimeRunning).since,
-              (state as ChainTimeRunning).to));
+              (state as ChainTimeRunning).to,
+              chainHolder!.account.pubKeyHEX));
         } else {
-          emit(ChainLoaded(chainHolder!.getAccountBalance()));
+          emit(ChainLoaded(chainHolder!.getAccountBalance(),
+              chainHolder!.account.pubKeyHEX));
         }
       }
       if (event is ChainAnnounced) {
         final res = await chainHolder!.announceTo(event.to);
-        emit(ChainTimeRunning(
-            chainHolder!.getAccountBalance(), res.timePoint, res.project));
+        emit(ChainTimeRunning(chainHolder!.getAccountBalance(), res.timePoint,
+            res.project, chainHolder!.account.pubKeyHEX));
       }
       if (event is ChainSend) {
         chainHolder!.sendAmmountTo(event.to, event.amount);
-        emit(ChainLoaded(chainHolder!.getAccountBalance()));
+        emit(ChainLoaded(
+            chainHolder!.getAccountBalance(), chainHolder!.account.pubKeyHEX));
       }
     });
   }
