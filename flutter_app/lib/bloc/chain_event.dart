@@ -14,3 +14,9 @@ class ChainSend extends ChainEvent {
   final String to;
   ChainSend(this.amount, this.to);
 }
+
+class ChainAnnounced extends ChainEvent {
+  final String to;
+  final DateTime timestamp;
+  ChainAnnounced(this.timestamp, this.to);
+}

@@ -4,6 +4,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:cryptography/dart.dart';
 import 'package:hex/hex.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:staking_lib/src/announcement.dart';
 
 import 'transaction.dart';
 
@@ -58,5 +59,16 @@ class Account {
       String txOutId, int txOutIndex, List<UnspentTxOut> aUnspentTxOuts) {
     return aUnspentTxOuts.firstWhere(
         (uTxO) => uTxO.txOutId == txOutId && uTxO.txOutIdx == txOutIndex);
+  }
+
+  Future<String> signAnnouncement(Announcement a) async {
+    final String toSign = a.project + a.type + a.timePoint.toString();
+    final algorithm = Ed25519();
+    final pubKey =
+        SimplePublicKey(HEX.decode(pubKeyHEX), type: KeyPairType.ed25519);
+    final privKey = SimpleKeyPairData(HEX.decode(privateKeyHEX),
+        type: KeyPairType.ed25519, publicKey: pubKey);
+    return HEX.encode(
+        (await algorithm.sign(utf8.encode(toSign), keyPair: privKey)).bytes);
   }
 }

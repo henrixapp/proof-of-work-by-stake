@@ -13,6 +13,7 @@ class Message {
   Blockchain? chain;
   Block? latestBlock;
   List<Transaction>? transactionPool;
+  List<Announcement>? announcementPool;
   final String request;
   final String senderIdent;
   factory Message.fromJson(Map<String, dynamic> json) =>
@@ -72,6 +73,12 @@ class UDPChainHolder {
           handleTransactions(m.transactionPool!);
         }
       }
+      if (m.request == "send_announcement_pool") {
+        if (m.announcementPool != null) {
+          print("Received Announcement Pool. Trying to mint now.");
+          handleAnnouncements(m.announcementPool!);
+        }
+      }
       if (m.request == "send_latest_block") {
         if (m.latestBlock != null) {
           handleSingleBlock(m.latestBlock!);
@@ -124,6 +131,14 @@ class UDPChainHolder {
     return chain.getAccountBalance(account.pubKeyHEX);
   }
 
+  void handleAnnouncements(List<Announcement> announcementPool) {
+    Block bl = chain.submitAnnouncements(announcementPool, account);
+
+    Message m = Message("send_latest_block", account.pubKeyHEX);
+    m.latestBlock = bl;
+    send(m);
+  }
+
   void handleTransactions(List<Transaction> transactionPool) {
     Block bl = chain.submitTransactions(transactionPool, account);
 
@@ -139,6 +154,15 @@ class UDPChainHolder {
     Message m = Message("send_transaction_pool", account.pubKeyHEX);
     m.transactionPool = txs;
     send(m);
+  }
+
+  Future<Announcement> announceTo(String to) async {
+    var an = await chain.generateAnnouncement(account, to);
+    List<Announcement> txs = [an];
+    Message m = Message("send_announcement_pool", account.pubKeyHEX);
+    m.announcementPool = txs;
+    send(m);
+    return an;
   }
 
   Future<void> request() async {

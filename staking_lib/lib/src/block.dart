@@ -61,9 +61,14 @@ class Block {
     return stakingHashInt <= comp;
   }
 
-  bool isValidNewBlock(Block oldblock) {
+  Future<bool> isValidNewBlock(Block oldblock) async {
+    bool announc = true;
+    for (var a in announcements) {
+      announc &= await a.verifySignature();
+    }
     return oldblock.index == (index - 1) &&
         oldblock.hash == previousHash &&
+        announc &&
         oldblock.timestamp.isBefore(timestamp) &&
         calculateHash(
                 index,

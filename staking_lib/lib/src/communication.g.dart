@@ -18,12 +18,16 @@ Message _$MessageFromJson(Map<String, dynamic> json) => Message(
           : Block.fromJson(json['latestBlock'] as Map<String, dynamic>)
       ..transactionPool = (json['transactionPool'] as List<dynamic>?)
           ?.map((e) => Transaction.fromJson(e as Map<String, dynamic>))
+          .toList()
+      ..announcementPool = (json['announcementPool'] as List<dynamic>?)
+          ?.map((e) => Announcement.fromJson(e as Map<String, dynamic>))
           .toList();
 
 Map<String, dynamic> _$MessageToJson(Message instance) => <String, dynamic>{
       'chain': instance.chain,
       'latestBlock': instance.latestBlock,
       'transactionPool': instance.transactionPool,
+      'announcementPool': instance.announcementPool,
       'request': instance.request,
       'senderIdent': instance.senderIdent,
     };

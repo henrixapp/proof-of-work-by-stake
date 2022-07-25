@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:duration/duration.dart';
+import 'package:timeago_flutter/timeago_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/bloc/chain_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: "t"),
+      home: MyHomePage(title: "PoW by PoS"),
     );
   }
 }
@@ -89,21 +90,44 @@ class _MyHomePageState extends State<MyHomePage> {
       body: BlocBuilder<ChainBloc, ChainState>(
         builder: (context, state) {
           var amount = state.amount;
+
+          final style = Theme.of(context).textTheme.headlineLarge;
+          final style3 = Theme.of(context).textTheme.caption;
+          if (state is ChainTimeRunning) {
+            return Column(
+              children: [
+                Text("You have announced to work on project", style: style3),
+                Text(state.to, style: style),
+                Text("since", style: style3),
+                Timeago(
+                  date: state.since,
+                  builder: (_, value) => Text(value, style: style),
+                  allowFromNow: true,
+                  refreshRate: Duration(seconds: 10),
+                ),
+                TextButton.icon(
+                    onPressed: () {
+                      BlocProvider.of<ChainBloc>(context).add(ChainSend(
+                          DateTime.now().difference(state.since).inSeconds,
+                          state.to));
+                    },
+                    icon: Icon(Icons.send),
+                    label: Text(
+                      "CheckIn Time",
+                      style: style,
+                    )),
+              ],
+            );
+          }
           return Column(children: [
-            Text("Amount left $amount"),
+            Text("Amount left ${prettyDuration(Duration(seconds: amount))}"),
             TextButton.icon(
                 onPressed: () {
                   BlocProvider.of<ChainBloc>(context).add(ChainRequest());
                 },
                 icon: Icon(Icons.abc),
-                label: Text("Request")),
-            TextButton.icon(
-                onPressed: () {
-                  BlocProvider.of<ChainBloc>(context).add(ChainSend(100,
-                      "461ac15f7ab3c57f49f7af2e5f2c6fe738f99dfb96622694104d9c64a43f0f23"));
-                },
-                icon: Icon(Icons.abc),
-                label: Text("Send 100 to Henrik")),
+                label: Text("Request an update")),
+            Text("Start by scanning a project pubkey."),
             MobileScanner(
                 allowDuplicates: false,
                 onDetect: (barcode, args) {
@@ -112,6 +136,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   } else {
                     final String code = barcode.rawValue!;
                     debugPrint('Barcode found! $code');
+                    BlocProvider.of<ChainBloc>(context)
+                        .add(ChainAnnounced(DateTime.now(), code));
                   }
                 }),
           ]);
@@ -123,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
           BlocProvider.of<ChainBloc>(context).add(ChainRequest());
         },
         tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.replay_outlined),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }

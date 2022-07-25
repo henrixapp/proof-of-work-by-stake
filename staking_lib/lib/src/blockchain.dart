@@ -4,9 +4,9 @@ import 'dart:math';
 import 'package:cryptography/cryptography.dart';
 import 'package:hex/hex.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:staking_lib/staking_lib.dart';
-import 'package:tuple/tuple.dart';
 
+import 'package:tuple/tuple.dart';
+import 'account.dart';
 import 'transaction.dart';
 import 'announcement.dart';
 import 'block.dart';
@@ -27,25 +27,23 @@ class Blockchain {
                       e2.id, id, e2.txOuts[id].address, e2.txOuts[id].amount))
                   .toList();
             })
-            .reduce((value, element) => value + element)
+            .fold(List<UnspentTxOut>.empty(),
+                (value, element) => element + (value! as List<UnspentTxOut>))
             .toList())
-        .reduce((value, element) => element + value)
+        .fold(List<UnspentTxOut>.empty(),
+            (value, element) => element + (value as List<UnspentTxOut>))
         .toList();
-    List<UnspentTxOut> consumedTxOuts = chain
-        .map((e) => e.transactions
-            .map((e2) {
+    List consumedTxOuts = chain
+        .map((e) => e.transactions.map((e2) {
               final List fixedList =
                   Iterable<int>.generate(e2.txIns.length).toList();
               return fixedList.map((i) {
                 final e3 = e2.txIns[i];
                 return UnspentTxOut(e3.txOutId, e3.txOutIndex, '', 0);
               }).toList();
-            })
-            .reduce((value, element) => value + element)
-            .toList())
-        .reduce((value, element) => value + element)
-        .toList();
-    return unspent
+            }).fold([], (value, element) => (value as List) + element).toList())
+        .fold([], (value, element) => (value as List) + element).toList();
+    return List<UnspentTxOut>.from((unspent
         .where((element) =>
             (consumedTxOuts.firstWhere(
                 (uTxO) =>
@@ -53,7 +51,7 @@ class Blockchain {
                     uTxO.txOutIdx == element.txOutIdx,
                 orElse: () => UnspentTxOut("null", 0, "", 0))).txOutId ==
             "null")
-        .toList();
+        .toList()));
   }
 
   Blockchain(this.chain);
@@ -100,7 +98,7 @@ class Blockchain {
       res = unspentTxOuts(verbose: true)
           .where((element) => element.address == pubKey)
           .map((e) => e.amount)
-          .reduce((value, element) => value + element);
+          .fold(0, (value, element) => value + (element as int));
     } catch (e) {}
     return res;
   }
@@ -155,6 +153,7 @@ class Blockchain {
 
   Future<Transaction> generateTransaction(
       Account from, String to, int amount) async {
+    print(amount);
     var res = findTxOutsForAmount(amount, unspentTxOuts(), from.pubKeyHEX);
     final leftOverAmount = res.item2;
     final includedUnspentTx = res.item1;
@@ -235,10 +234,10 @@ class Blockchain {
         validateTxIns &&
         transaction.txIns
                 .map((e) => getTxInAmount(e, aUnspentTxOuts))
-                .reduce((value, element) => value + element) ==
+                .fold(0, (value, element) => (value! as int) + element) ==
             transaction.txOuts
                 .map((e) => e.amount)
-                .reduce((value, element) => value + element);
+                .fold(0, (value, element) => (value! as int) + element);
   }
 
   Future<bool> validateBlockTransactions(List<Transaction> transactions,
@@ -256,7 +255,6 @@ class Blockchain {
     for (var tr in normalTransactions) {
       result &= await validate(tr, aUnspentTxOuts);
       if (!result) {
-        print("test");
         print(tr);
       }
     }
@@ -279,15 +277,16 @@ class Blockchain {
     List<UnspentTxOut>? aUnspentTxOuts = [];
     for (var i = 0; i < chain.length; i++) {
       Block currentBlock = chain[i];
-      if (i != 0 && !currentBlock.isValidNewBlock(chain[i - 1])) {
+      if (i != 0 && !await currentBlock.isValidNewBlock(chain[i - 1])) {
         return false;
       }
-
-      aUnspentTxOuts = await processTransactions(
-          currentBlock.transactions, aUnspentTxOuts!, currentBlock.index);
-      if (aUnspentTxOuts == null) {
-        print('invalid transactions in blockchain');
-        return false;
+      if (currentBlock.transactions.isNotEmpty) {
+        aUnspentTxOuts = await processTransactions(
+            currentBlock.transactions, aUnspentTxOuts!, currentBlock.index);
+        if (aUnspentTxOuts == null) {
+          print('invalid transactions in blockchain');
+          return false;
+        }
       }
     }
     return true;
@@ -304,9 +303,10 @@ class Blockchain {
             return UnspentTxOut(e2.id, i, e.address, e.amount);
           }).toList();
         })
-        .reduce((value, element) => value + element)
+        .fold(List<UnspentTxOut>.empty(),
+            (value, element) => (value! as List<UnspentTxOut>) + element)
         .toList();
-    List<UnspentTxOut> consumedTxOuts = transactions
+    List consumedTxOuts = transactions
         .map((e2) {
           final List fixedList =
               Iterable<int>.generate(e2.txIns.length).toList();
@@ -315,7 +315,8 @@ class Blockchain {
             return UnspentTxOut(e2.id, i, '', 0);
           }).toList();
         })
-        .reduce((value, element) => value + element)
+        .fold(List<UnspentTxOut>.empty(),
+            (value, element) => (value! as List<UnspentTxOut>) + element)
         .toList();
     return aUnspentTxOuts
         .where((element) =>
@@ -329,8 +330,8 @@ class Blockchain {
       ..addAll(newOnes);
   }
 
-  void appendBlock(Block latestBlock) {
-    if (latestBlock.isValidNewBlock(chain.last)) {
+  void appendBlock(Block latestBlock) async {
+    if (await latestBlock.isValidNewBlock(chain.last)) {
       print("Appending block");
       chain.add(latestBlock);
     }
@@ -342,5 +343,20 @@ class Blockchain {
         chain.length, chain.last.hash, transactionPool, [], difficulty, from);
     chain.add(bl);
     return bl;
+  }
+
+  Block submitAnnouncements(
+      List<Announcement> announcementPool, Account account) {
+    final difficulty = 10000;
+    Block bl = findBlock(chain.length, chain.last.hash, [], announcementPool,
+        difficulty, account);
+    chain.add(bl);
+    return bl;
+  }
+
+  Future<Announcement> generateAnnouncement(Account account, String to) async {
+    var a = Announcement(DateTime.now(), "", account.pubKeyHEX, to, "begin");
+    a.signature = await account.signAnnouncement(a);
+    return a;
   }
 }

@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:cryptography/cryptography.dart';
+import 'package:hex/hex.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'announcement.g.dart';
@@ -9,13 +12,17 @@ part 'announcement.g.dart';
 @JsonSerializable()
 class Announcement {
   final DateTime timePoint;
-  final String signature;
+  String signature;
   final String user;
   final String project;
   final String type;
 
-  bool verifySignature() {
-    return true;
+  Future<bool> verifySignature() async {
+    final String toSign = project + type + timePoint.toString();
+    final algorithm = Ed25519();
+    final pubKey = SimplePublicKey(HEX.decode(user), type: KeyPairType.ed25519);
+    final signature = Signature(HEX.decode(this.signature), publicKey: pubKey);
+    return await algorithm.verify(utf8.encode(toSign), signature: signature);
   }
 
   factory Announcement.fromJson(Map<String, dynamic> json) =>

@@ -55,6 +55,7 @@ class ChainBloc extends Bloc<ChainEvent, ChainState> {
           await chainHolder!.bind();
           chainHolder!.start();
           print("Fertig!");
+          print(chainHolder!.account.pubKeyHEX);
         }
       }
       if (event is ChainRequest) {
@@ -66,7 +67,19 @@ class ChainBloc extends Bloc<ChainEvent, ChainState> {
       }
       if (event is ChainChanged) {
         print("Reloadings");
-        emit(ChainLoaded(chainHolder!.getAccountBalance()));
+        if (state is ChainTimeRunning) {
+          emit(ChainTimeRunning(
+              chainHolder!.getAccountBalance(),
+              (state as ChainTimeRunning).since,
+              (state as ChainTimeRunning).to));
+        } else {
+          emit(ChainLoaded(chainHolder!.getAccountBalance()));
+        }
+      }
+      if (event is ChainAnnounced) {
+        final res = await chainHolder!.announceTo(event.to);
+        emit(ChainTimeRunning(
+            chainHolder!.getAccountBalance(), res.timePoint, res.project));
       }
       if (event is ChainSend) {
         chainHolder!.sendAmmountTo(event.to, event.amount);

@@ -16,3 +16,11 @@ class ChainInitial extends ChainState {
 class ChainLoaded extends ChainState {
   ChainLoaded(super.amount);
 }
+
+class ChainTimeRunning extends ChainState {
+  final DateTime since;
+  final String to;
+  ChainTimeRunning(super.amount, this.since, this.to);
+  @override
+  List<Object> get props => [amount, since, to];
+}
