@@ -23,7 +23,8 @@ Opens the chain at `<chain name>.json` for user with public/private key in
 
  ### 3.  `node.dart`
 
-**Params:** `dart node.dart <name 1> <chain name>`
+**Params:** `dart node.dart <name 1> <port> <chain name>`
 
 Opens the chain of `<chain name>.json` as `<name 1>.json`  priv/pubkey and 
 broadcasts them to the network. For usage together with flutter-app.
+<port> is the port of communication. Usually, 65000.
