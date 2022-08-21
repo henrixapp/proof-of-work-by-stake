@@ -222,6 +222,10 @@ In the flutter run log should be a message like
 Updated chain. From 540300978d114a3cdffcd1d22ad074cccdf779f5e82807aaedbbc43e6fa1981b.
 ```
 
+|  After request update   |
+| ------------------------ |
+| ![Announcement in App](figures/received2600.PNG) |
+
 ### Step 6 Using the app
 
 Until now, we did not use the annoucement feature of our blockchain.
@@ -229,7 +233,16 @@ If you scan a qr code, like the one earlier, you will automatically announce in 
 that you are working on the project under that adress and will later transfer time 
 to it.
 
+|  Announcement directly   | ... after one minute    |
+| ------------------------ | ----------------------- |
+| ![Announcement in App](figures/qr_scanned.PNG) | ![Announcement in App](figures/qr_1minute.PNG) |
+
 Go ahead and scan the qr code of henrixapp-pub.png for example. Wait for a minute and then "Checkin time" to ammend the chain.
+
+
+|  Updated time after transaction to `project-a`   |
+| ------------------------ |
+| ![Updated time after transaction](figures/updated_time_after_transaction.PNG)|
 
 The node should automatically store these transaction in `coolchain.json`
 
