@@ -120,7 +120,7 @@ transaction the input amount must equal the output amount. The `txIns`
 are references to former `txOuts`and  `txOuts`are so to say unspent on the chain until
 they get referenced in a `txIn`. To get your balance, you just have to sum up all unspent txOuts.
 
-The *genesis+ block of our chain is special because it only contains one `txOut`
+The *genesis* block of our chain is special because it only contains one `txOut`
 to our previously generated address (`540300978d114a3cdffcd1d22ad074cccdf779f5e82807aaedbbc43e6fa1981b`).
 Furthermore, it does not contain reference to a previous hash as it is the starting block.
 
@@ -164,6 +164,10 @@ This `txIn`has to be signed so that we know that the owner of the address is act
 with spending their `txOut`. the `txOut`consists out of two entries. One for the amount we
 are sending to the address we entered and one containing the rest of the unspent `txOut`
 we were using.
+
+| Illustration of the txOut/txIn mechanism |
+| ---------------------------------------- |
+| ![](figures/transaction.png) |
 
 Furthermore, it contains information about the minter  and the difficulty we assigned for finding the block and the nonce we used for finding the block more quickly.
  The difficulty is used to satisfy the staking condition:
